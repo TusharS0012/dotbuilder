@@ -1,0 +1,32 @@
+{
+  "name": "be",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "nodemon --ext ts --exec ts-node src/index.ts",
+    "build": "tsc -b"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@webcontainer/api": "^1.5.3",
+    "autocannon": "^8.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "jszip": "^3.10.1",
+    "morgan": "^1.10.0",
+    "openai": "^4.89.0",
+    "typescript": "^5.7.2"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/jszip": "^3.4.1",
+    "nodemon": "^3.1.9"
+  }
+}
