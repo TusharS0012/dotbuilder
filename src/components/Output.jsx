@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
-import { executeCode } from "../api";
 
-const Output = ({ editorRef, language }) => {
+const Output = ({ editorRef, language_id }) => {
   const [output, setOutput] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -12,9 +11,22 @@ const Output = ({ editorRef, language }) => {
     if (!sourceCode) return;
     setIsLoading(true);
     try {
-      const { run: result } = await executeCode(language, sourceCode);
-      setOutput(result.output.split("\n"));
-      result.stderr ? setIsError(true) : setIsError(false);
+      const response = await fetch('/api/execute-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ language_id, sourceCode }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to execute code');
+      }
+  
+      const result = await response.json();
+      const outputText = result.stdout || result.stderr || result.compile_output || "No output";
+      setOutput(outputText.split("\n"));
+      setIsError(Boolean(result.stderr || result.compile_output));
     } catch (error) {
       console.log(error);
       setIsError(true);
@@ -23,6 +35,7 @@ const Output = ({ editorRef, language }) => {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className=" ml-3 w-[30%] bg-black ring-1 ring-gray-700 rounded-lg shadow-lg ">

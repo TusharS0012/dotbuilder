@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import axios from "axios";
 import LanguageSelector from "./LanguageSelector";
-import { CODE_SNIPPETS } from "@/constants";
+import { CODE_SNIPPETS, LANGUAGE_MAP } from "@/constants";
 import { Box } from "@chakra-ui/react";
 import Output from "./Output";
 import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
@@ -242,7 +242,7 @@ export default function CodeEditor({ file }) {
               }}
             />
           </Box>
-          {!isExpanded && <Output editorRef={editorRef} language={codeLanguage} />}
+          {!isExpanded && <Output editorRef={editorRef} language_id={LANGUAGE_MAP[codeLanguage]} />}
         </div>
       </Box>
     </div>

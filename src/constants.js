@@ -1,12 +1,13 @@
-export const LANGUAGE_VERSIONS = {
-    "javascript": "18.15.0",
-    "typescript": "5.0.3",
-    "python": "3.10.0",
-    "java": "15.0.2",
-    "csharp": "6.12.0",
-    "php": "8.2.3",
-    "c++" : "10.2.0",
-}
+export const LANGUAGE_MAP = {
+  javascript: 63,
+  typescript: 74,
+  python: 71,
+  java: 62,
+  csharp: 51,
+  php: 68,
+  cpp: 54,
+};
+
 
 export const CODE_SNIPPETS = {
     javascript: `\nfunction greet(name) {\n\tconsole.log("Hello, " + name + "!");\n}\n\ngreet("Alex");\n`,

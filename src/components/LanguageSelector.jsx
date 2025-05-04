@@ -8,10 +8,10 @@ import {
   MenuTrigger,
   Text,
 } from "@chakra-ui/react";
-import { LANGUAGE_VERSIONS } from "../constants";
+import { LANGUAGE_MAP } from "../constants";
 import { Langar } from "next/font/google";
 import { color } from "framer-motion";
-const languages = Object.entries(LANGUAGE_VERSIONS);
+const languages = Object.entries(LANGUAGE_MAP);
 const active_color = "blue.400";
 const LanguageSelector = ({ language, onSelect }) => {
   return (
