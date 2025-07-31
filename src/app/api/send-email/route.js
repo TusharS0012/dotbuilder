@@ -1,26 +1,21 @@
+// src/app/api/send-email/route.js
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail"; // Import the SendGrid library
+
+// Set the SendGrid API Key directly here using the environment variable
+// This should be done once globally or at the top level of your API route file.
+sgMail.setApiKey(process.env.SEND_GRID_API_KEY); // Make sure the env variable name is correct!
 
 export async function POST(req) {
   try {
-    const { email, code } = await req.json(); // Get email and code from request
+    const { email, code } = await req.json(); // Get recipient email and verification code
 
-    // Create a transporter
-    const transport = await nodemailer.createTransport({
-      service: "SendGrid", // For Mailgun, set 'host' and 'port' instead
-      auth: {
-        user: "apikey", // for SendGrid, 'user' is 'apikey'
-        pass: process.env.SEND_GRID_API_KEY, // set this API key as an environment variable
-      },
-    });
-
-    const receiver = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "SynapseCode | Verification Code",
-      headers: {
-        "List-Unsubscribe": `<mailto:${process.env.EMAIL_USER}>`,
-      },
+    // Define the email message object directly using SendGrid's format
+    const msg = {
+      to: email, // Recipient email from the request
+      from: process.env.EMAIL_USER, // Your verified sender email (from environment variables)
+      subject: "DotBuilder - Email Verification Code",
+      text: `Your verification code for DotBuilder is: ${code}. This code is valid for 10 minutes.`,
       html: `
         <!DOCTYPE html>
         <html lang="en">
@@ -35,32 +30,49 @@ export async function POST(req) {
               <p>Your verification code for DotBuilder is:</p>
               <h3 style="color: green;">${code}</h3>
               <p>Please enter this code on the website to verify your email.</p>
-              <p>Thank you!</p>
+              <p>Thank you for signing up for DotBuilder!</p>
               <p style="font-size: 12px; color: gray;">
-                Stealthify | Your Company Address | <a href="mailto:${process.env.EMAIL_USER}">Contact Support</a>
+                DotBuilder | Your Company Address (Optional) | <a href="mailto:${process.env.EMAIL_USER}">Contact Support</a>
               </p>
               <p style="font-size: 12px; color: gray;">If you didn’t request this, please ignore this email.</p>
             </div>
           </body>
         </html>
-        `,
+      `,
     };
 
-    const result = await transport.sendMail(receiver);
-    if (result.rejected.length > 0) {
-      return NextResponse.json({
-        success: false,
-        message: "Verification email not sent!",
-      });
-    }
+    // Send the email using SendGrid's send method
+    await sgMail.send(msg);
+
+    // If no error, assume success
     return NextResponse.json({
       success: true,
-      message: "Verification email sent!",
+      message: "Verification email sent successfully!",
     });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+    console.error("Error sending verification email via SendGrid:", error);
+
+    // Provide more specific error details if available from SendGrid
+    if (error.response) {
+      console.error("SendGrid Response Body:", error.response.body);
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Email sending failed: ${
+            error.response.body.errors
+              ? error.response.body.errors.map((e) => e.message).join(", ")
+              : "Unknown SendGrid error"
+          }`,
+          details: error.response.body, // Include full details for debugging
+        },
+        { status: 500 }
+      );
+    } else {
+      // Generic error for other issues
+      return NextResponse.json(
+        { success: false, message: error.message || "Failed to send email." },
+        { status: 500 }
+      );
+    }
   }
 }
