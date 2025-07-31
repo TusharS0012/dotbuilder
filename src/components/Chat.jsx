@@ -12,14 +12,26 @@ import {
   deleteDoc,
   doc,
   getDocs,
-  where
+  where,
 } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { ClipboardDocumentIcon, CheckIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
-import { MessageSquarePlus, Send, Sparkles, Trash, Trash2, X, XCircle } from "lucide-react";
+import SyntaxHighlighter from "react-syntax-highlighter/dist/light";
+import dracula from "react-syntax-highlighter/dist/styles/dracula";
+import {
+  ClipboardDocumentIcon,
+  CheckIcon,
+  PaperAirplaneIcon,
+} from "@heroicons/react/24/outline";
+import {
+  MessageSquarePlus,
+  Send,
+  Sparkles,
+  Trash,
+  Trash2,
+  X,
+  XCircle,
+} from "lucide-react";
 
 function Chatroom({ workspaceId, setIsChatOpen }) {
   const [messages, setMessages] = useState([]);
@@ -27,27 +39,42 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
   const [loading, setLoading] = useState(true);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
 
-  const userId = auth.currentUser.uid;
-  const name = auth.currentUser.displayName;
+  const userId = auth.currentUser?.uid;
+  const name = auth.currentUser?.displayName;
 
   const messagesRef = collection(firestore, "messages");
-  const messagesQuery = query(messagesRef, orderBy("createdAt"));
 
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    if (!workspaceId) return;
+    if (!workspaceId) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
 
-    const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
-      const messagesData = snapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((msg) => msg.workspaceId === workspaceId);
+    const workspaceMessagesQuery = query(
+      messagesRef,
+      where("workspaceId", "==", workspaceId),
+      orderBy("createdAt")
+    );
 
-      setMessages(messagesData);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      workspaceMessagesQuery,
+      (snapshot) => {
+        const messagesData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setMessages(messagesData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching messages:", error);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, [workspaceId]);
@@ -61,18 +88,25 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
   const generateAIResponse = async (prompt) => {
     setIsAIProcessing(true);
     try {
-      const response = await fetch('/api/getChatResponse', {
-        method: 'POST',
+      const response = await fetch("/api/getChatResponse", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ message: prompt }),
       });
-  
+
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown API error" }));
+        throw new Error(
+          `API request failed: ${response.status} ${response.statusText} - ${
+            errorData.message || "No message"
+          }`
+        );
       }
-  
+
       const data = await response.json();
       return data.aiResponse;
     } catch (error) {
@@ -86,27 +120,29 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
   const sendMessage = async () => {
     if (newMessage.trim() === "") return;
 
-    const imageUrl = auth.currentUser.photoURL;
+    if (!userId || !name) {
+      console.error("User not authenticated or display name not available.");
+      return;
+    }
+
+    const imageUrl = auth.currentUser?.photoURL;
     const aiMatch = newMessage.match(/@(.+)/);
     let aiPrompt = null;
     let userMessage = newMessage;
 
-    console.log(aiMatch);
     if (aiMatch) {
       aiPrompt = aiMatch[1].trim();
     }
 
     try {
-      if (userMessage) {
-        await addDoc(messagesRef, {
-          text: userMessage,
-          createdAt: serverTimestamp(),
-          imageUrl,
-          userId,
-          name,
-          workspaceId,
-        });
-      }
+      await addDoc(messagesRef, {
+        text: userMessage,
+        createdAt: serverTimestamp(),
+        imageUrl,
+        userId,
+        name,
+        workspaceId,
+      });
 
       if (aiPrompt) {
         const aiResponse = await generateAIResponse(aiPrompt);
@@ -127,12 +163,21 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
   };
 
   const clearChat = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to clear all messages in this workspace? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
     try {
-      const querySnapshot = await getDocs(
-        query(messagesRef, where("workspaceId", "==", workspaceId))
+      const q = query(messagesRef, where("workspaceId", "==", workspaceId));
+      const querySnapshot = await getDocs(q);
+
+      const deletePromises = querySnapshot.docs.map((docItem) =>
+        deleteDoc(doc(firestore, "messages", docItem.id))
       );
-      
-      const deletePromises = querySnapshot.docs.map((docItem) => deleteDoc(doc(messagesRef, docItem.id)));
       await Promise.all(deletePromises);
       setMessages([]);
     } catch (error) {
@@ -165,15 +210,15 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
 
         if (startIndex > lastIndex) {
           parts.push({
-            type: 'text',
-            content: text.substring(lastIndex, startIndex)
+            type: "text",
+            content: text.substring(lastIndex, startIndex),
           });
         }
 
         parts.push({
-          type: 'code',
-          lang: lang || 'text',
-          code: code.trim()
+          type: "code",
+          lang: lang || "text",
+          code: code.trim(),
         });
 
         lastIndex = endIndex;
@@ -181,8 +226,8 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
 
       if (lastIndex < text.length) {
         parts.push({
-          type: 'text',
-          content: text.substring(lastIndex)
+          type: "text",
+          content: text.substring(lastIndex),
         });
       }
 
@@ -190,22 +235,31 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
     };
 
     const copyToClipboard = async (code, index) => {
-      await navigator.clipboard.writeText(code);
-      setCopiedCode(index);
-      setTimeout(() => setCopiedCode(null), 2000);
+      try {
+        await navigator.clipboard.writeText(code);
+        setCopiedCode(index);
+        setTimeout(() => setCopiedCode(null), 2000);
+      } catch (err) {
+        console.error("Failed to copy text: ", err);
+      }
     };
 
     return (
-      <div className={`flex flex-col gap-1  ${
-        isCurrentUser ? "items-end" : 
-        isAI ? "items-center w-full" : "items-start"
-      }`}>
+      <div
+        className={`flex flex-col gap-1 ${
+          isCurrentUser
+            ? "items-end"
+            : isAI
+            ? "items-center w-full"
+            : "items-start"
+        }`}
+      >
         {!isAI && (
           <span className="text-xs text-gray-400">
             {isCurrentUser ? "You" : msg.name}
           </span>
         )}
-        
+
         <div className="flex justify-end gap-2">
           {!isCurrentUser && !isAI && (
             <img
@@ -215,22 +269,27 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
             />
           )}
 
-          <div className={`py-2 px-4 text-sm rounded-2xl mx-auto max-w-[550px] break-words ${
-            isAI ? "bg-green-900/20 border ring-1 ring-green-400" :
-            isCurrentUser ? "bg-purple-600/60" : "bg-blue-600/60 "
-          }`}>
+          <div
+            className={`py-2 px-4 text-sm rounded-2xl mx-auto max-w-[550px] break-words ${
+              isAI
+                ? "bg-green-900/20 border ring-1 ring-green-400"
+                : isCurrentUser
+                ? "bg-purple-600/60"
+                : "bg-blue-600/60 "
+            }`}
+          >
             {isAI && <span className="text-blue-400 mr-2">⚡</span>}
-            
+
             {parseMessage(msg.text).map((part, index) => {
-              if (part.type === 'text') {
+              if (part.type === "text") {
                 return (
                   <span key={index} className="whitespace-pre-wrap">
                     {part.content}
                   </span>
                 );
               }
-              
-              if (part.type === 'code') {
+
+              if (part.type === "code") {
                 return (
                   <div key={index} className="relative my-2 group">
                     <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -247,21 +306,23 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
                     </div>
                     <SyntaxHighlighter
                       language={part.lang}
-                      style={vscDarkPlus}
+                      style={dracula}
                       customStyle={{
-                        background: '#000',
-                        borderRadius: '0.5rem',
-                        padding: '1rem',
-                        margin: '0.5rem 0'
+                        background: "#000",
+                        borderRadius: "0.5rem",
+                        padding: "1rem",
+                        margin: "0.5rem 0",
                       }}
-                      codeTagProps={{ style: { fontFamily: 'Fira Code, monospace' } }}
+                      codeTagProps={{
+                        style: { fontFamily: "Fira Code, monospace" },
+                      }}
                     >
                       {part.code}
                     </SyntaxHighlighter>
                   </div>
                 );
               }
-              
+
               return null;
             })}
 
@@ -302,7 +363,9 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
           </div>
           <h2 className="text-xl font-semibold shadow-2xl text-gray-100">
             Collaborative AI Chat
-            <span className="text-indigo-400/90 text-sm font-normal ml-2">v1.2</span>
+            <span className="text-indigo-400/90 text-sm font-normal ml-2">
+              v1.2
+            </span>
           </h2>
         </div>
         <div className="flex gap-2">
@@ -330,12 +393,14 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
               <MessageSquarePlus className="h-8 w-8 opacity-60" />
             </div>
             <p>Start a conversation with AI</p>
-            <p className="text-sm mt-1 text-gray-500/70">Type @ followed by your query</p>
+            <p className="text-sm mt-1 text-gray-500/70">
+              Type @ followed by your query
+            </p>
           </div>
         ) : (
           messages.map((msg) => (
-            <MessageBubble 
-              key={msg.id} 
+            <MessageBubble
+              key={msg.id}
               msg={msg}
               className="animate-message-enter"
             />
@@ -346,9 +411,18 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
           <div className="flex justify-center animate-pulse">
             <div className="flex items-center gap-3 text-indigo-300 text-sm py-2 px-4 rounded-full bg-gray-700/50 border border-indigo-500/20">
               <div className="flex space-x-1">
-                <div className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0s'}} />
-                <div className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
-                <div className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
+                <div
+                  className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0s" }}
+                />
+                <div
+                  className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.1s" }}
+                />
+                <div
+                  className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.2s" }}
+                />
               </div>
               <span>Analyzing request...</span>
             </div>
@@ -359,7 +433,7 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
 
       {/* Input Section */}
       <div className="p-4 border-t border-gray-600/30 bg-gray-800/60 backdrop-blur-sm">
-        <form 
+        <form
           onSubmit={(e) => {
             e.preventDefault();
             sendMessage();
@@ -373,8 +447,8 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
             placeholder="Type your message... (@ for AI commands)"
             className="flex-1 bg-gray-700/40 border border-gray-600/30 text-gray-200 placeholder-gray-500 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
           />
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isAIProcessing}
             className="bg-indigo-600/80 hover:bg-indigo-500/90 text-gray-100 rounded-xl px-6 flex items-center gap-2 transition-all duration-200 hover:scale-[1.02] group"
           >
@@ -386,6 +460,5 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
     </div>
   );
 }
-
 
 export default Chatroom;
