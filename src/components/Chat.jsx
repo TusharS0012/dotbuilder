@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { auth, firestore } from "@/config/firebase";
+import { auth, firestore } from "@/config/firebase"; // firestore instead of db for messagesRef
 import {
   collection,
   query,
@@ -17,7 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SyntaxHighlighter from "react-syntax-highlighter/dist/light";
-import dracula from "react-syntax-highlighter/dist/styles/dracula";
+import atelierLakesideLight from "react-syntax-highlighter/dist/styles/atelier-lakeside-light"; // Import light themes
+import vs from "react-syntax-highlighter/dist/styles/vs"; // Another light theme
 import {
   ClipboardDocumentIcon,
   CheckIcon,
@@ -42,7 +43,7 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
   const userId = auth.currentUser?.uid;
   const name = auth.currentUser?.displayName;
 
-  const messagesRef = collection(firestore, "messages");
+  const messagesRef = collection(firestore, "messages"); // Ensure firestore is imported and used correctly
 
   const messagesEndRef = useRef(null);
 
@@ -149,7 +150,7 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
         await addDoc(messagesRef, {
           text: `🤖 ${aiResponse}`,
           createdAt: serverTimestamp(),
-          imageUrl: "/ai-avatar.png",
+          imageUrl: "/ai-avatar.png", // Ensure this path is correct for your AI avatar
           userId: "AI_BOT",
           name: "CodeBot",
           workspaceId,
@@ -255,7 +256,7 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
         }`}
       >
         {!isAI && (
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-500">
             {isCurrentUser ? "You" : msg.name}
           </span>
         )}
@@ -270,20 +271,24 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
           )}
 
           <div
-            className={`py-2 px-4 text-sm rounded-2xl mx-auto max-w-[550px] break-words ${
+            className={`py-2 px-4 text-sm rounded-2xl mx-auto max-w-[550px] break-words shadow-sm ${
+              // Added subtle shadow to bubbles
               isAI
-                ? "bg-green-900/20 border ring-1 ring-green-400"
+                ? "bg-blue-50 border border-blue-200 text-blue-800" // Light blue for AI, with border and darker text
                 : isCurrentUser
-                ? "bg-purple-600/60"
-                : "bg-blue-600/60 "
+                ? "bg-purple-100 border border-purple-200 text-purple-800" // Light purple for current user, with border and darker text
+                : "bg-gray-100 border border-gray-200 text-gray-800" // Light gray for other users, with border and darker text
             }`}
           >
-            {isAI && <span className="text-blue-400 mr-2">⚡</span>}
+            {isAI && <span className="text-blue-600 mr-2">⚡</span>}
 
             {parseMessage(msg.text).map((part, index) => {
               if (part.type === "text") {
                 return (
-                  <span key={index} className="whitespace-pre-wrap">
+                  <span
+                    key={index}
+                    className="whitespace-pre-wrap text-gray-800"
+                  >
                     {part.content}
                   </span>
                 );
@@ -292,26 +297,27 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
               if (part.type === "code") {
                 return (
                   <div key={index} className="relative my-2 group">
-                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       <button
                         onClick={() => copyToClipboard(part.code, index)}
-                        className="p-1 rounded bg-gray-700/50 hover:bg-gray-600/50 backdrop-blur-sm"
+                        className="p-1 rounded bg-gray-200/80 hover:bg-gray-300/80 backdrop-blur-sm text-gray-700" // Light button, dark text
                       >
                         {copiedCode === index ? (
-                          <CheckIcon className="h-4 w-4 text-green-400" />
+                          <CheckIcon className="h-4 w-4 text-green-500" />
                         ) : (
-                          <ClipboardDocumentIcon className="h-4 w-4 text-gray-300" />
+                          <ClipboardDocumentIcon className="h-4 w-4 text-gray-500" />
                         )}
                       </button>
                     </div>
                     <SyntaxHighlighter
                       language={part.lang}
-                      style={dracula}
+                      style={vs} // Changed to a light theme for code highlighting
                       customStyle={{
-                        background: "#000",
+                        background: "#f8f8f8", // Very light background for code block
                         borderRadius: "0.5rem",
                         padding: "1rem",
                         margin: "0.5rem 0",
+                        color: "#333", // Default text color for code
                       }}
                       codeTagProps={{
                         style: { fontFamily: "Fira Code, monospace" },
@@ -327,7 +333,7 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
             })}
 
             {isAI && (
-              <div className="text-xs text-green-200/70 mt-1">
+              <div className="text-xs text-blue-600/70 mt-1">
                 AI-generated response
               </div>
             )}
@@ -347,38 +353,38 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
+      <div className="flex items-center justify-center h-full text-gray-600">
         Loading messages...
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full backdrop-blur-sm border border-gray-500 rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-3xl">
-      {/* Header with glass effect */}
-      <div className="flex justify-between items-center p-4 bg-gray-950/60 backdrop-blur-xl border-b-2 border-gray-600 shadow-sm">
+    <div className="flex flex-col h-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+      {/* Header */}
+      <div className="flex justify-between items-center p-4 bg-gray-50 border-b border-gray-200 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-900/20 rounded-lg border border-indigo-200/20">
-            <Sparkles className="h-6 w-6 text-indigo-200" />
+          <div className="p-2 bg-blue-100 rounded-lg border border-blue-200">
+            {" "}
+            {/* Light blue background, blue border */}
+            <Sparkles className="h-6 w-6 text-blue-600" />
           </div>
-          <h2 className="text-xl font-semibold shadow-2xl text-gray-100">
+          <h2 className="text-xl font-semibold text-gray-800">
             Collaborative AI Chat
-            <span className="text-indigo-400/90 text-sm font-normal ml-2">
-              v1.2
-            </span>
+            <span className="text-blue-500 text-sm font-normal ml-2">v1.2</span>
           </h2>
         </div>
         <div className="flex gap-2">
           <Button
             onClick={clearChat}
-            className="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-600/60 text-gray-300 rounded-xl flex items-center gap-2 transition-all duration-200 hover:scale-[1.02]"
+            className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl flex items-center gap-2 transition-all duration-200 shadow-sm" // Light gray button, darker on hover, dark text
           >
             <Trash className="h-4 w-4 text-red-500" />
             <span>Clear</span>
           </Button>
           <Button
             onClick={() => setIsChatOpen(false)}
-            className="p-2 bg-gray-700/50 hover:bg-gray-600/60 text-white rounded-xl transition-all duration-200 hover:scale-[1.02]"
+            className="p-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-all duration-200 shadow-sm" // Light gray button, darker on hover, dark text
           >
             <X className="h-5 w-5" />
           </Button>
@@ -386,14 +392,14 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-800/60 ">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500 text-sm animate-fade-in">
+          <div className="flex flex-col items-center justify-center h-full text-gray-600 text-sm animate-fade-in">
             <div className="mb-4 animate-float">
-              <MessageSquarePlus className="h-8 w-8 opacity-60" />
+              <MessageSquarePlus className="h-8 w-8 text-gray-400 opacity-60" />
             </div>
             <p>Start a conversation with AI</p>
-            <p className="text-sm mt-1 text-gray-500/70">
+            <p className="text-sm mt-1 text-gray-500">
               Type @ followed by your query
             </p>
           </div>
@@ -409,18 +415,18 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
 
         {isAIProcessing && (
           <div className="flex justify-center animate-pulse">
-            <div className="flex items-center gap-3 text-indigo-300 text-sm py-2 px-4 rounded-full bg-gray-700/50 border border-indigo-500/20">
+            <div className="flex items-center gap-3 text-blue-500 text-sm py-2 px-4 rounded-full bg-blue-100 border border-blue-200">
               <div className="flex space-x-1">
                 <div
-                  className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce"
+                  className="h-2 w-2 bg-blue-400 rounded-full animate-bounce"
                   style={{ animationDelay: "0s" }}
                 />
                 <div
-                  className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce"
+                  className="h-2 w-2 bg-blue-400 rounded-full animate-bounce"
                   style={{ animationDelay: "0.1s" }}
                 />
                 <div
-                  className="h-2 w-2 bg-indigo-400 rounded-full animate-bounce"
+                  className="h-2 w-2 bg-blue-400 rounded-full animate-bounce"
                   style={{ animationDelay: "0.2s" }}
                 />
               </div>
@@ -432,7 +438,7 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
       </div>
 
       {/* Input Section */}
-      <div className="p-4 border-t border-gray-600/30 bg-gray-800/60 backdrop-blur-sm">
+      <div className="p-4 border-t border-gray-200 bg-white">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -445,14 +451,14 @@ function Chatroom({ workspaceId, setIsChatOpen }) {
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type your message... (@ for AI commands)"
-            className="flex-1 bg-gray-700/40 border border-gray-600/30 text-gray-200 placeholder-gray-500 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+            className="flex-1 bg-gray-100 border border-gray-300 text-gray-800 placeholder-gray-500 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" // Light input, dark text, subtle border
           />
           <Button
             type="submit"
             disabled={isAIProcessing}
-            className="bg-indigo-600/80 hover:bg-indigo-500/90 text-gray-100 rounded-xl px-6 flex items-center gap-2 transition-all duration-200 hover:scale-[1.02] group"
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 flex items-center gap-2 transition-all duration-200 shadow-sm group" // Solid blue button, shadow
           >
-            <PaperAirplaneIcon className="h-5 w-5 text-indigo-100 group-hover:translate-x-0.5 transition-transform" />
+            <PaperAirplaneIcon className="h-5 w-5 text-white group-hover:translate-x-0.5 transition-transform" />
             <span>Send</span>
           </Button>
         </form>

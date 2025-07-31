@@ -7,21 +7,21 @@ export async function POST(req) {
 
     // Create a transporter
     const transport = await nodemailer.createTransport({
-        service: 'SendGrid', // For Mailgun, set 'host' and 'port' instead
-        auth: {
-          user: 'apikey', // for SendGrid, 'user' is 'apikey'
-          pass: process.env.SENDGRID_API_KEY, // set this API key as an environment variable
-        },
-      });
+      service: "SendGrid", // For Mailgun, set 'host' and 'port' instead
+      auth: {
+        user: "apikey", // for SendGrid, 'user' is 'apikey'
+        pass: process.env.SEND_GRID_API_KEY, // set this API key as an environment variable
+      },
+    });
 
-      const receiver = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'SynapseCode | Verification Code',
-        headers: {
-          'List-Unsubscribe': `<mailto:${process.env.EMAIL_USER}>`,
-        },
-        html: `
+    const receiver = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "SynapseCode | Verification Code",
+      headers: {
+        "List-Unsubscribe": `<mailto:${process.env.EMAIL_USER}>`,
+      },
+      html: `
         <!DOCTYPE html>
         <html lang="en">
           <head>
@@ -32,7 +32,7 @@ export async function POST(req) {
           <body style="font-family: Arial, sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
               <h2>Hello, Coder!</h2>
-              <p>Your verification code for SynapseCode is:</p>
+              <p>Your verification code for DotBuilder is:</p>
               <h3 style="color: green;">${code}</h3>
               <p>Please enter this code on the website to verify your email.</p>
               <p>Thank you!</p>
@@ -44,15 +44,23 @@ export async function POST(req) {
           </body>
         </html>
         `,
-      };
-      
-      const result = await transport.sendMail(receiver);
-    if(result.rejected.length > 0){
-        return NextResponse.json({ success: false, message: "Verification email not sent!" });
+    };
+
+    const result = await transport.sendMail(receiver);
+    if (result.rejected.length > 0) {
+      return NextResponse.json({
+        success: false,
+        message: "Verification email not sent!",
+      });
     }
-    console.log ("iam in send emai -api")
-    return NextResponse.json({ success: true, message: "Verification email sent!" });
+    return NextResponse.json({
+      success: true,
+      message: "Verification email sent!",
+    });
   } catch (error) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }

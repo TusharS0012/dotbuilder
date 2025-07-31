@@ -1,21 +1,32 @@
 "use client";
-import { Moon, Sun, Sparkles, Wrench, File, Expand, Shrink, Settings } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  Sparkles,
+  Wrench,
+  File,
+  Expand,
+  Shrink,
+  Settings,
+} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import axios from "axios";
 import LanguageSelector from "./LanguageSelector";
 import { CODE_SNIPPETS, LANGUAGE_MAP } from "@/constants";
-import { Box } from "@chakra-ui/react";
-import Output from "./Output";
+import { Box } from "@chakra-ui/react"; // Assuming Chakra UI is configured for light theme
+import Output from "./Output"; // Assuming Output component adapts
 import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/config/firebase";
 
 export default function CodeEditor({ file }) {
-  const [selectedTheme, setSelectedTheme] = useState("vs-dark");
+  const [selectedTheme, setSelectedTheme] = useState("light"); // Default to light theme
   const [fontSize, setFontSize] = useState(14);
   const [showSettings, setShowSettings] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [updatedCode, setUpdatedCode] = useState("//Select a file to start coding..!");
+  const [updatedCode, setUpdatedCode] = useState(
+    "//Select a file to start coding..!"
+  );
   const [isFixing, setIsFixing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const monaco = useMonaco();
@@ -92,7 +103,10 @@ export default function CodeEditor({ file }) {
   const generateDocs = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.post("/api/generate-documentation", { code: updatedCode, language: codeLanguage });
+      const res = await axios.post("/api/generate-documentation", {
+        code: updatedCode,
+        language: codeLanguage,
+      });
       const documentation = res.data.documentation;
       const commentedDocs = `\n\n${documentation}`;
       setUpdatedCode((prevCode) => prevCode + commentedDocs);
@@ -106,7 +120,10 @@ export default function CodeEditor({ file }) {
   const fixSyntaxErrors = async () => {
     setIsFixing(true);
     try {
-      const res = await axios.post("/api/get-errors", { code: updatedCode, codeLanguage });
+      const res = await axios.post("/api/get-errors", {
+        code: updatedCode,
+        codeLanguage,
+      });
       if (res.data.fixedCode) {
         setUpdatedCode(res.data.fixedCode);
       }
@@ -119,6 +136,7 @@ export default function CodeEditor({ file }) {
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
+    // Monaco editor needs to be laid out again when its container size changes
     setTimeout(() => editorRef.current?.layout(), 100);
   };
 
@@ -139,31 +157,54 @@ export default function CodeEditor({ file }) {
   ];
 
   return (
-    <div className={`bg-gray-900 m-2 h-[94%] rounded-xl p-3 ${isExpanded ? "fixed inset-0 z-50 m-0" : "relative"}`}>
+    <div
+      className={`bg-white m-2 h-[94%] rounded-xl p-3 shadow-lg border border-gray-200 ${
+        isExpanded ? "fixed inset-0 z-50 m-0" : "relative"
+      }`}
+    >
+      {" "}
+      {/* White background, shadow, light border */}
       <Box className="relative h-full">
         <div className="flex h-full">
-          <Box w={isExpanded ? "100%" : "78%"} transition="all 0.3s ease" className=" bg-green-30 h-[100%]">
-            <div className="flex justify-between items-center h-[10%] pr-12 ">
+          <Box
+            w={isExpanded ? "100%" : "78%"}
+            transition="all 0.3s ease"
+            className="h-[100%]"
+          >
+            {" "}
+            {/* Removed bg-green-30 */}
+            <div className="flex justify-between items-center h-[10%] pr-12">
               {file && (
-                <div className="flex items-center bg-gray-900 text-white px-4 max-h-[50px] rounded-md shadow-md border border-gray-700 w-40">
-                  <File size={16} className="mr-2 text-green-400" />
-                  <span className="text-sm text-gray-300 line-clamp-1">{file.name}</span>
+                <div className="flex items-center bg-gray-100 text-gray-800 px-4 max-h-[50px] rounded-md shadow-sm border border-gray-200 w-40">
+                  {" "}
+                  {/* Light background, dark text, subtle border/shadow */}
+                  <File size={16} className="mr-2 text-blue-500" />{" "}
+                  {/* Blue icon */}
+                  <span className="text-sm text-gray-700 line-clamp-1">
+                    {file.name}
+                  </span>{" "}
+                  {/* Darker text */}
                 </div>
               )}
-              <div className="flex gap-3 items-center ">
+              <div className="flex gap-3 items-center">
                 <div className="relative" ref={settingsRef}>
                   <button
-                    className="flex items-center bg-gray-800 text-white p-2 rounded-full shadow-md hover:bg-gray-700 transition ring-1 ring-gray-600"
+                    className="flex items-center bg-gray-100 text-gray-700 p-2 rounded-full shadow-sm hover:bg-gray-200 transition ring-1 ring-gray-300" // Light button, dark text, light ring, subtle shadow
                     onClick={() => setShowSettings(!showSettings)}
                   >
                     <Settings size={16} />
                   </button>
                   {showSettings && (
-                    <div className="absolute left-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl p-3 space-y-3 z-50">
+                    <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl p-3 space-y-3 z-50 border border-gray-200">
+                      {" "}
+                      {/* White background, light border */}
                       <div>
-                        <label className="text-xs text-gray-300 mb-1 block">Theme</label>
+                        <label className="text-xs text-gray-700 mb-1 block">
+                          Theme
+                        </label>{" "}
+                        {/* Darker text */}
                         <select
-                          className="w-full bg-gray-700 text-gray-200 text-xs p-1 rounded"
+                          className="w-full bg-gray-100 text-gray-800 text-xs p-1 rounded border border-gray-300 focus:border-blue-500 outline-none" // Light background, dark text, subtle border
                           value={selectedTheme}
                           onChange={(e) => setSelectedTheme(e.target.value)}
                         >
@@ -175,36 +216,42 @@ export default function CodeEditor({ file }) {
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-gray-300 mb-1 block">Font Size</label>
+                        <label className="text-xs text-gray-700 mb-1 block">
+                          Font Size
+                        </label>{" "}
+                        {/* Darker text */}
                         <input
                           type="range"
                           min="10"
                           max="24"
                           value={fontSize}
                           onChange={(e) => setFontSize(Number(e.target.value))}
-                          className="w-full bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-slider-thumb-blue" // Light slider track, need custom thumb style
                         />
-                        <span className="text-xs text-gray-300 block text-center">{fontSize}px</span>
+                        <span className="text-xs text-gray-700 block text-center">
+                          {fontSize}px
+                        </span>{" "}
+                        {/* Darker text */}
                       </div>
                     </div>
                   )}
                 </div>
                 <button
-                  className="flex items-center gap-1.5 bg-blue-700 bg-opacity-20 ring-1 ring-blue-600 text-white px-3 py-1.5 rounded-full shadow-md hover:bg-blue-600 transition disabled:opacity-50 text-xs"
+                  className="flex items-center gap-1.5 bg-blue-500 text-white px-3 py-1.5 rounded-full shadow-sm hover:bg-blue-600 transition disabled:opacity-50 text-xs" // Solid blue button
                   onClick={generateDocs}
                   disabled={isLoading}
                 >
                   <Sparkles size={14} /> {isLoading ? "Generating..." : "Docs"}
                 </button>
                 <button
-                  className="flex items-center gap-1.5 bg-teal-600 bg-opacity-20 ring-1 ring-teal-600 text-white px-3 py-1.5 rounded-full shadow-md hover:bg-teal-600 transition disabled:opacity-50 text-xs"
+                  className="flex items-center gap-1.5 bg-teal-500 text-white px-3 py-1.5 rounded-full shadow-sm hover:bg-teal-600 transition disabled:opacity-50 text-xs" // Solid teal button
                   onClick={fixSyntaxErrors}
                   disabled={isFixing}
                 >
                   <Wrench size={14} /> {isFixing ? "Fixing..." : "Fix"}
                 </button>
                 <button
-                  className="flex items-center gap-1.5 bg-purple-600 bg-opacity-20 ring-1 ring-purple-600 text-white px-3 py-1.5 rounded-full shadow-md hover:bg-purple-600 transition text-xs"
+                  className="flex items-center gap-1.5 bg-purple-500 text-white px-3 py-1.5 rounded-full shadow-sm hover:bg-purple-600 transition text-xs" // Solid purple button
                   onClick={toggleExpand}
                 >
                   {isExpanded ? (
@@ -215,7 +262,8 @@ export default function CodeEditor({ file }) {
                   {isExpanded ? "Collapse" : "Expand"}
                 </button>
               </div>
-              <LanguageSelector language={codeLanguage} onSelect={onSelect} />
+              <LanguageSelector language={codeLanguage} onSelect={onSelect} />{" "}
+              {/* Assuming LanguageSelector adapts */}
             </div>
             <Editor
               height={isExpanded ? "calc(100vh - 100px)" : "92%"}
@@ -237,12 +285,22 @@ export default function CodeEditor({ file }) {
                   mode: "subword",
                   suppressSuggestions: false,
                 },
-                quickSuggestions: { other: true, comments: true, strings: true },
+                quickSuggestions: {
+                  other: true,
+                  comments: true,
+                  strings: true,
+                },
                 suggestSelection: "recentlyUsed",
               }}
             />
           </Box>
-          {!isExpanded && <Output editorRef={editorRef} language_id={LANGUAGE_MAP[codeLanguage]} />}
+          {/* Output is only visible when not expanded */}
+          {!isExpanded && (
+            <Output
+              editorRef={editorRef}
+              language_id={LANGUAGE_MAP[codeLanguage]}
+            />
+          )}
         </div>
       </Box>
     </div>

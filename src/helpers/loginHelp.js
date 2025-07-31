@@ -1,4 +1,8 @@
-import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { auth } from "@/config/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/config/firebase"; // Firestore instance
@@ -6,9 +10,12 @@ import { db } from "@/config/firebase"; // Firestore instance
 // Function to log in with Email and Password
 export const loginWithEmailAndPassword = async (email, password) => {
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
     const user = userCredential.user;
-    console.log("Logged in with email:", user.email);
     return user;
   } catch (error) {
     console.error("Error logging in with email:", error.message);

@@ -3,6 +3,8 @@ import "./globals.css";
 import { Provider } from "@/components/ui/provider";
 import { AuthProvider } from "@/context/AuthProvider";
 import { Analytics } from "@vercel/analytics/next";
+import LenisProvider from "@/components/LenisProvider"; // Ensure this path is correct
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -25,7 +27,10 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <Provider>{children}</Provider>
+          {/* Wrap your content with LenisProvider */}
+          <LenisProvider>
+            <Provider>{children}</Provider>
+          </LenisProvider>
         </AuthProvider>
         <Analytics />
       </body>

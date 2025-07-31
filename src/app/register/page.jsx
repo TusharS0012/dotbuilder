@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { signUpUser, signInWithGoogle, verifyEmailCode } from "@/helpers/signUpHelp";
+import {
+  signUpUser,
+  signInWithGoogle,
+  verifyEmailCode,
+} from "@/helpers/signUpHelp";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +30,7 @@ const toastOptions = {
   closeOnClick: true,
   pauseOnHover: true,
   draggable: true,
-  theme: "dark",
+  theme: "light", // Changed to light theme for toast
 };
 
 export default function SignUpPage() {
@@ -59,18 +63,26 @@ export default function SignUpPage() {
 
     setLoading(true);
     try {
-      const res = await verifyEmailCode(email, verificationCode, password, displayName);
+      const res = await verifyEmailCode(
+        email,
+        verificationCode,
+        password,
+        displayName
+      );
       if (res.success) {
-        toast.success("Account created successfully! Redirecting...", toastOptions);
-        setVerificationCode("")
+        toast.success(
+          "Account created successfully! Redirecting...",
+          toastOptions
+        );
+        setVerificationCode("");
         router.push("/dashboard");
       } else {
         toast.error(res.message, toastOptions);
-        setVerificationCode("")
+        setVerificationCode("");
       }
     } catch (error) {
       toast.error("Verification failed: " + error.message, toastOptions);
-      setVerificationCode("")
+      setVerificationCode("");
     }
     setLoading(false);
   };
@@ -91,12 +103,29 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-slate-900">
-      <ToastContainer theme="dark" />
-
-      <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 relative">
+      {" "}
+      {/* Changed background to light gray */}
+      <ToastContainer theme="light" /> {/* Changed toast theme to light */}
+      {/* DotBuilder Logo */}
+      <div className="absolute top-4 left-4">
+        <Link
+          href="/"
+          className="text-gray-800 text-3xl font-bold tracking-tight"
+        >
+          {" "}
+          {/* Changed text color to dark gray */}
+          DotBuilder
+        </Link>
+      </div>
+      <Card className="w-full max-w-md bg-white border-gray-300 shadow-lg">
+        {" "}
+        {/* Changed card background, border, and added shadow */}
         <CardHeader>
-          <CardTitle className="text-center text-2xl text-white">Create Account</CardTitle>
+          <CardTitle className="text-center text-2xl text-gray-800">
+            Create Account
+          </CardTitle>{" "}
+          {/* Changed text color to dark gray */}
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -104,21 +133,21 @@ export default function SignUpPage() {
             placeholder="Display Name"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="bg-slate-700 text-white border-slate-600"
+            className="bg-white text-gray-800 border-gray-300"
           />
           <Input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="bg-slate-700 text-white border-slate-600"
+            className="bg-white text-gray-800 border-gray-300"
           />
           <Input
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="bg-slate-700 text-white border-slate-600"
+            className="bg-white text-gray-800 border-gray-300"
           />
           <Button
             onClick={handleSignUp}
@@ -134,25 +163,24 @@ export default function SignUpPage() {
           >
             {loading ? "Processing..." : "Continue with Google"}
           </Button>
-          <p className="text-center text-sm text-slate-400">
+          <p className="text-center text-sm text-gray-600">
             Already have an account?{" "}
-            <Link href="/login" className="text-blue-400 hover:underline">
+            <Link href="/login" className="text-blue-600 hover:underline">
               Login here
             </Link>
           </p>
         </CardContent>
       </Card>
-
       <Dialog open={showVerification} onOpenChange={setShowVerification}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white">
+        <DialogContent className="bg-white border-gray-300 text-gray-800">
           <DialogHeader>
             <DialogTitle>Verify Your Email</DialogTitle>
-            <DialogDescription className="text-slate-400">
+            <DialogDescription className="text-gray-600">
               Enter the 6-digit code sent to {email}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <Label className="block text-sm font-medium text-slate-300">
+            <Label className="block text-sm font-medium text-gray-700">
               Verification Code
             </Label>
             <Input
@@ -160,7 +188,7 @@ export default function SignUpPage() {
               placeholder="123456"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
-              className="bg-slate-700 text-white border-slate-600"
+              className="bg-white text-gray-800 border-gray-300"
               maxLength={6}
             />
           </div>
